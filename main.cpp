@@ -8,7 +8,12 @@
 
 using namespace std;
 
-fstream addressBook;
+fstream data, userFile;
+
+struct User {
+    int loginUserID;
+    string login, password;
+};
 
 struct UserData {
     int id;
@@ -22,21 +27,73 @@ string loadData() {
     return in;
 }
 
-void saveChangesToTheFile(vector<UserData> &usersDatabase) {
+void saveChangesToTheFile(vector<UserData> &addressBookWithUsers, int loginUserID) {
 
-    addressBook.open("Adresaci.txt", ios::out);
+    UserData user;
 
-    for (int i = 0; i < (int) usersDatabase.size(); i++)
-        addressBook << usersDatabase.at(i).id << "|" << usersDatabase.at(i).name << "|" << usersDatabase.at(i).surname << "|" << usersDatabase.at(i).phoneNumber << "|" << usersDatabase.at(i).email << "|" << usersDatabase.at(i).address << "|" << endl;
+    data.open("Adresaci.txt", ios::in);
+    ofstream newFile("Adresaci_temp.txt", ios::out);
 
-    addressBook.close();
+    int loginID = 0, lineNumber = 1;
+    string line;
+
+    while (getline(data, line, '|')) {
+
+        switch(lineNumber) {
+        case 1:
+            user.id = atoi(line.c_str());
+            break;
+        case 2:
+            loginID = atoi(line.c_str());
+            break;
+        case 3:
+            user.name = line;
+            break;
+        case 4:
+            user.surname = line;
+            break;
+        case 5:
+            user.phoneNumber = line;
+            break;
+        case 6:
+            user.email = line;
+            break;
+        case 7:
+            user.address = line;
+            break;
+        }
+
+        if (lineNumber == 7) {
+            if (addressBookWithUsers.size() == 0 && loginID != loginUserID)
+                newFile << user.id << "|" << loginID << "|" << user.name << "|" << user.surname << "|" << user.phoneNumber << "|" << user.email << "|" << user.address << "|" << endl;
+            else {
+                for (int i = 0; i < (int) addressBookWithUsers.size(); i++) {
+                    if (user.id == addressBookWithUsers.at(i).id && loginID == loginUserID) {
+                        newFile << addressBookWithUsers.at(i).id << "|" << loginUserID << "|" << addressBookWithUsers.at(i).name << "|" << addressBookWithUsers.at(i).surname << "|" << addressBookWithUsers.at(i).phoneNumber << "|" << addressBookWithUsers.at(i).email << "|" << addressBookWithUsers.at(i).address << "|" << endl;
+                        break;
+                    } else if (loginID != loginUserID) {
+                        newFile << user.id << "|" << loginID << "|" << user.name << "|" << user.surname << "|" << user.phoneNumber << "|" << user.email << "|" << user.address << "|" << endl;
+                        break;
+                    }
+                }
+            }
+
+            lineNumber = 0;
+        }
+
+        lineNumber++;
+    }
+    newFile.close();
+    data.close();
+    remove("Adresaci.txt");
+    rename("Adresaci_temp.txt", "Adresaci.txt");
 }
 
-void editHomeAddress(vector<UserData> &usersDatabase, int ID) {
+void editHomeAddress(vector<UserData> &addressBookWithUsers, int ID) {
     system ("cls");
 
-    cout << "Zmiana adresu " << usersDatabase.at(ID).address << " na: ";
-    usersDatabase.at(ID).address = loadData();
+    cout << "Zmiana adresu " << addressBookWithUsers.at(ID).address << " na: ";
+    addressBookWithUsers.at(ID).address = loadData();
 }
 
 bool emailAddressVerificationByRegex(string newEmail) {
@@ -44,20 +101,20 @@ bool emailAddressVerificationByRegex(string newEmail) {
     return regex_match(newEmail,pattern);
 }
 
-string emailAddressVerification (vector<UserData> &usersDatabase, string newEmail) {
+string emailAddressVerification (vector<UserData> &addressBookWithUsers, string newEmail) {
     int i = 0;
 
-    while (emailAddressVerificationByRegex(newEmail) == false && (int) usersDatabase.size() == 0) {
+    while (emailAddressVerificationByRegex(newEmail) == false && (int) addressBookWithUsers.size() == 0) {
         cout << "Niepoprawny adres e-mail.\nWpisz jeszcze raz: ";
         newEmail = loadData();
     }
 
-    while (i < (int) usersDatabase.size()) {
+    while (i < (int) addressBookWithUsers.size()) {
 
         if (emailAddressVerificationByRegex(newEmail) == false) {
             cout << "Niepoprawny adres e-mail.\nWpisz jeszcze raz: ";
             newEmail = loadData();
-        } else if (usersDatabase.at(i).email == newEmail) {
+        } else if (addressBookWithUsers.at(i).email == newEmail) {
             cout << "Masz juz adresata z podanym e-mailem: " << newEmail << "\nWpisz pononwnie: ";
             newEmail = loadData();
             i = -1;
@@ -67,16 +124,16 @@ string emailAddressVerification (vector<UserData> &usersDatabase, string newEmai
     return newEmail;
 }
 
-void editAddresEmail(vector<UserData> &usersDatabase, int ID) {
+void editAddresEmail(vector<UserData> &addressBookWithUsers, int ID) {
     system ("cls");
 
     string newEmail;
-    cout << "Zmiana e-mail " << usersDatabase.at(ID).email << " na: ";
+    cout << "Zmiana e-mail " << addressBookWithUsers.at(ID).email << " na: ";
     newEmail = loadData();
 
-    newEmail = emailAddressVerification(usersDatabase, newEmail);
+    newEmail = emailAddressVerification(addressBookWithUsers, newEmail);
 
-    usersDatabase.at(ID).email = newEmail;
+    addressBookWithUsers.at(ID).email = newEmail;
 }
 
 bool checkIfThereAreOnlyDigits(string newNumber) {
@@ -84,21 +141,21 @@ bool checkIfThereAreOnlyDigits(string newNumber) {
     return all_of(newNumber.begin(), newNumber.end(), ::isdigit);
 }
 
-string phoneNumberVerification (vector<UserData> &usersDatabase, string newNumber) {
+string phoneNumberVerification (vector<UserData> &addressBookWithUsers, string newNumber) {
 
     int i = 0;
 
-    while (checkIfThereAreOnlyDigits(newNumber) == false && (int) usersDatabase.size() == 0) {
+    while (checkIfThereAreOnlyDigits(newNumber) == false && (int) addressBookWithUsers.size() == 0) {
         cout << "Niepoprawny numer telefonu.\nWpisz jeszcze raz: ";
         newNumber = loadData();
     }
 
-    while (i < (int) usersDatabase.size()) {
+    while (i < (int) addressBookWithUsers.size()) {
         if (checkIfThereAreOnlyDigits(newNumber) == false) {
             cout << "Niepoprawny numer telefonu.\nWpisz jeszcze raz: ";
             newNumber = loadData();
             i = -1;
-        } else if (usersDatabase.at(i).phoneNumber == newNumber && (int) usersDatabase.size() != 0) {
+        } else if (addressBookWithUsers.at(i).phoneNumber == newNumber && (int) addressBookWithUsers.size() != 0) {
             cout << "Masz juz adresata z podanym numerem: " << newNumber << "\nWpisz pononwnie: ";
             newNumber = loadData();
             i = -1;
@@ -110,37 +167,37 @@ string phoneNumberVerification (vector<UserData> &usersDatabase, string newNumbe
     return newNumber;
 }
 
-void editNumberPhone(vector<UserData> &usersDatabase, int ID) {
+void editNumberPhone(vector<UserData> &addressBookWithUsers, int ID) {
     system ("cls");
     string newNumber;
-    cout << "Zmiana numeru telefonu " << usersDatabase.at(ID).phoneNumber << " na: ";
+    cout << "Zmiana numeru telefonu " << addressBookWithUsers.at(ID).phoneNumber << " na: ";
     newNumber = loadData();
-    newNumber = phoneNumberVerification(usersDatabase, newNumber);
+    newNumber = phoneNumberVerification(addressBookWithUsers, newNumber);
 
-    usersDatabase.at(ID).phoneNumber = newNumber;
+    addressBookWithUsers.at(ID).phoneNumber = newNumber;
 }
 
-void editSurname(vector<UserData> &usersDatabase, int ID) {
+void editSurname(vector<UserData> &addressBookWithUsers, int ID) {
     system ("cls");
 
-    cout << "Zmiana nazwiska " << usersDatabase.at(ID).surname << " na: ";
-    usersDatabase.at(ID).surname = loadData();
+    cout << "Zmiana nazwiska " << addressBookWithUsers.at(ID).surname << " na: ";
+    addressBookWithUsers.at(ID).surname = loadData();
 }
 
-void editName(vector<UserData> &usersDatabase, int ID) {
+void editName(vector<UserData> &addressBookWithUsers, int ID) {
     system ("cls");
 
-    cout << "Zmiana imienia " << usersDatabase.at(ID).name << " na: ";
-    usersDatabase.at(ID).name = loadData();
+    cout << "Zmiana imienia " << addressBookWithUsers.at(ID).name << " na: ";
+    addressBookWithUsers.at(ID).name = loadData();
 }
 
-void displaysUsersByID(vector<UserData> &usersDatabase, int ID) {
-    cout << "Id:                " << usersDatabase.at(ID).id << endl;
-    cout << "Imie:              " << usersDatabase.at(ID).name << endl;
-    cout << "Nazwisko:          " << usersDatabase.at(ID).surname << endl;
-    cout << "Numer telefonu:    " << usersDatabase.at(ID).phoneNumber << endl;
-    cout << "E-mail:            " << usersDatabase.at(ID).email << endl;
-    cout << "Adres:             " << usersDatabase.at(ID).address << endl;
+void displaysUsersByID(vector<UserData> &addressBookWithUsers, int ID) {
+    cout << "Id:                " << addressBookWithUsers.at(ID).id << endl;
+    cout << "Imie:              " << addressBookWithUsers.at(ID).name << endl;
+    cout << "Nazwisko:          " << addressBookWithUsers.at(ID).surname << endl;
+    cout << "Numer telefonu:    " << addressBookWithUsers.at(ID).phoneNumber << endl;
+    cout << "E-mail:            " << addressBookWithUsers.at(ID).email << endl;
+    cout << "Adres:             " << addressBookWithUsers.at(ID).address << endl;
     cout << endl;
 }
 
@@ -157,7 +214,7 @@ void displaysEditMenu() {
     cout << endl;
 }
 
-int searchForAUserByID(vector<UserData> &usersDatabase) {
+int searchForAUserByID(vector<UserData> &addressBookWithUsers) {
 
     int userID;
     string checkID;
@@ -171,16 +228,16 @@ int searchForAUserByID(vector<UserData> &usersDatabase) {
     }
     userID = atoi(checkID.c_str());
 
-    for (int i = 0; i < (int) usersDatabase.size(); i++) {
-        if (userID == usersDatabase.at(i).id)
+    for (int i = 0; i < (int) addressBookWithUsers.size(); i++) {
+        if (userID == addressBookWithUsers.at(i).id)
             return i;
     }
     return -1;
 }
 
-void editSelectedUserByID(vector<UserData> &usersDatabase) {
+void editSelectedUserByID(vector<UserData> &addressBookWithUsers, int loginUserID) {
 
-    int ID = searchForAUserByID(usersDatabase);
+    int ID = searchForAUserByID(addressBookWithUsers);
     bool backToMenu = true;
 
     if (ID < 0 ) {
@@ -191,22 +248,22 @@ void editSelectedUserByID(vector<UserData> &usersDatabase) {
 
     while (backToMenu && ID >= 0) {
         displaysEditMenu();
-        displaysUsersByID(usersDatabase, ID);
+        displaysUsersByID(addressBookWithUsers, ID);
         switch (getch()) {
         case '1':
-            editName(usersDatabase, ID);
+            editName(addressBookWithUsers, ID);
             break;
         case '2':
-            editSurname(usersDatabase, ID);
+            editSurname(addressBookWithUsers, ID);
             break;
         case '3':
-            editNumberPhone(usersDatabase, ID);
+            editNumberPhone(addressBookWithUsers, ID);
             break;
         case '4':
-            editAddresEmail(usersDatabase, ID);
+            editAddresEmail(addressBookWithUsers, ID);
             break;
         case '5':
-            editHomeAddress(usersDatabase, ID);
+            editHomeAddress(addressBookWithUsers, ID);
             break;
         case '6':
             backToMenu = false;
@@ -216,126 +273,114 @@ void editSelectedUserByID(vector<UserData> &usersDatabase) {
             Sleep(1000);
             break;
         }
-        saveChangesToTheFile(usersDatabase);
+        saveChangesToTheFile(addressBookWithUsers, loginUserID);
     }
 }
 
-void loadTheDataFileIntoTheProgram(vector<UserData> &usersDatabase, UserData &user) {
+int loadTheDataFileIntoTheProgram(vector<UserData> &addressBookWithUsers, int loginUserID) {
 
-    addressBook.open("Adresaci.txt", ios::in);
+    UserData user;
 
-    int lineNumber = 1;
+    int lineNumber = 1, loginID = 0;
     string line;
 
-    while (getline(addressBook, line, '|')) {
+    while (getline(data, line, '|')) {
 
         if (line == "\n")
             break;
 
         switch(lineNumber) {
-        case 1: {
+        case 1:
             user.id = atoi(line.c_str());
             break;
-        }
-        case 2: {
+        case 2:
+            loginID = atoi(line.c_str());
+            break;
+        case 3:
             user.name = line;
             break;
-        }
-        case 3: {
+        case 4:
             user.surname = line;
             break;
-        }
-        case 4: {
+        case 5:
             user.phoneNumber = line;
             break;
-        }
-        case 5: {
+        case 6:
             user.email = line;
             break;
-        }
-        case 6: {
+        case 7:
             user.address = line;
             break;
         }
-        }
-        if (lineNumber == 6) {
+        if (lineNumber == 7) {
             lineNumber = 0;
-            usersDatabase.emplace_back(user);
+            if (loginID == loginUserID)
+                addressBookWithUsers.emplace_back(user);
         }
         lineNumber++;
     }
-    addressBook.close();
+
+    return user.id;
 }
 
-void deleteSelectedUser(vector<UserData> &usersDatabase) {
+void deleteSelectedUser(vector<UserData> &addressBookWithUsers, int loginUserID) {
     system ("cls");
 
-    int ID = searchForAUserByID(usersDatabase);
+    int ID = searchForAUserByID(addressBookWithUsers);
     if (ID < 0 ) {
         cout << "Nie ma takiego adresata";
         Sleep(1500);
-    }
-    else{
-        displaysUsersByID(usersDatabase, ID);
+    } else {
+        displaysUsersByID(addressBookWithUsers, ID);
         cout << "Czy napewno chcesz usunac adresata ? " << endl;
         cout << "t/n: ";
     }
 
     if (ID >= 0 && getch() == 't') {
 
-        addressBook.open("Adresaci.txt", ios::out);
+        if (addressBookWithUsers.size() == 1)
+            addressBookWithUsers.clear();
 
-        if (usersDatabase.size() == 1) {
-            remove("Adresaci.txt");
-            addressBook.close();
-            usersDatabase.clear();
-            system ("cls");
-            cout << "\n>>>>> Adresat zostal usuniety. <<<<<";
-            Sleep(1500);
-
-        } else {
-
-            for (int i = 0; i < (int) usersDatabase.size(); i++) {
-                if (i != ID)
-                    addressBook << usersDatabase.at(i).id << "|" << usersDatabase.at(i).name << "|" << usersDatabase.at(i).surname << "|" << usersDatabase.at(i).phoneNumber << "|" << usersDatabase.at(i).email << "|" << usersDatabase.at(i).address << "|" << endl;
+        else if (addressBookWithUsers.size() > 1) {
+            for (int i = 0; i < (int) addressBookWithUsers.size(); i++) {
+                if (i == ID)
+                    addressBookWithUsers.erase(addressBookWithUsers.begin() + ID);
             }
-            addressBook.close();
-            usersDatabase.clear();
-
-            system ("cls");
-            cout << "\n>>>>> Adresat zostal usuniety. <<<<<";
-            Sleep(1500);
         }
-    }
 
+        saveChangesToTheFile(addressBookWithUsers, loginUserID);
+        system ("cls");
+        cout << "\n>>>>> Adresat zostal usuniety. <<<<<";
+        Sleep(1500);
+    }
 }
 
-void displaysAllUsers(vector<UserData> &usersDatabase) {
+void displaysAllUsers(vector<UserData> &addressBookWithUsers) {
 
     system("cls");
 
-    for (int i = 0; i < (int) usersDatabase.size(); i++) {
-        cout << usersDatabase[i].id << endl;
-        cout << usersDatabase[i].name << endl;
-        cout << usersDatabase[i].surname << endl;
-        cout << usersDatabase[i].phoneNumber << endl;
-        cout << usersDatabase[i].email << endl;
-        cout << usersDatabase[i].address << endl << endl;
+    for (int i = 0; i < (int) addressBookWithUsers.size(); i++) {
+        cout << addressBookWithUsers[i].id << endl;
+        cout << addressBookWithUsers[i].name << endl;
+        cout << addressBookWithUsers[i].surname << endl;
+        cout << addressBookWithUsers[i].phoneNumber << endl;
+        cout << addressBookWithUsers[i].email << endl;
+        cout << addressBookWithUsers[i].address << endl << endl;
     }
     cout << "\nNacisnij dowolny klawisz, aby kontynuowac . . ." << endl;
     getch();
 }
 
-void searchBySurname(vector<UserData> &usersDatabase) {
+void searchBySurname(vector<UserData> &addressBookWithUsers) {
     bool check = true;
     string wantedSurname;
     system ("cls");
     cout << "Wpisz nazwisko: ";
     wantedSurname = loadData();
     cout << endl;
-    for (int i = 0; i < (int) usersDatabase.size(); i++) {
-        if (wantedSurname == usersDatabase.at(i).surname) {
-            displaysUsersByID(usersDatabase, i);
+    for (int i = 0; i < (int) addressBookWithUsers.size(); i++) {
+        if (wantedSurname == addressBookWithUsers.at(i).surname) {
+            displaysUsersByID(addressBookWithUsers, i);
             check = false;
         }
     }
@@ -346,16 +391,16 @@ void searchBySurname(vector<UserData> &usersDatabase) {
     getch();
 }
 
-void searchByName(vector<UserData> &usersDatabase) {
+void searchByName(vector<UserData> &addressBookWithUsers) {
     bool check = true;
     string wantedName;
     system ("cls");
     cout << "Wpisz imie: ";
     wantedName = loadData();
     cout << endl;
-    for (int i = 0; i < (int) usersDatabase.size(); i++) {
-        if (wantedName == usersDatabase.at(i).name) {
-            displaysUsersByID(usersDatabase, i);
+    for (int i = 0; i < (int) addressBookWithUsers.size(); i++) {
+        if (wantedName == addressBookWithUsers.at(i).name) {
+            displaysUsersByID(addressBookWithUsers, i);
             check = false;
         }
     }
@@ -366,9 +411,9 @@ void searchByName(vector<UserData> &usersDatabase) {
     getch();
 }
 
-bool checkIfThereAreAnyUsers (vector<UserData> &usersDatabase) {
+bool checkIfThereAreAnyUsers (vector<UserData> &addressBookWithUsers) {
 
-    if ((int) usersDatabase.size() == 0) {
+    if ((int) addressBookWithUsers.size() == 0) {
         system ("cls");
         cout << "Ksiazka adresowa jest pusta !!!";
         Sleep(1500);;
@@ -377,19 +422,35 @@ bool checkIfThereAreAnyUsers (vector<UserData> &usersDatabase) {
     return true;
 }
 
-void dataLogging(vector<UserData> &usersDatabase) {
+int dataLogging(vector<UserData> &addressBookWithUsers, int loginUserID) {
 
     system("cls");
 
-    int ID = usersDatabase.size();
+    int IDOfTheLastUser;
+
+    data.open("Adresaci.txt", ios::in);
+
+    if (data.good()){
+        IDOfTheLastUser = loadTheDataFileIntoTheProgram(addressBookWithUsers, loginUserID);
+        data.close();
+    }
+
+    ifstream in ("Adresaci.txt");
+    bool fileIsEmpty = (in.get(), in.eof());
+
+    if (fileIsEmpty){
+        IDOfTheLastUser = 0;
+        in.close();
+    }
+
     string name, surname, phoneNumber, email, address;
 
-    addressBook.open("Adresaci.txt", ios::out | ios::app);
+    data.open("Adresaci.txt", ios::out | ios::app);
 
-    if (ID == 0)
-        ID = 1;
+    if (IDOfTheLastUser == 0)
+        IDOfTheLastUser = 1;
     else
-        ID = usersDatabase.at(ID - 1).id + 1;
+        IDOfTheLastUser = IDOfTheLastUser + 1;
 
     cout << "Wpisz imie: ";
     name = loadData();
@@ -399,24 +460,49 @@ void dataLogging(vector<UserData> &usersDatabase) {
 
     cout << "Wpisz numer telefonu: ";
     phoneNumber = loadData();
-    phoneNumber = phoneNumberVerification(usersDatabase, phoneNumber);
+    phoneNumber = phoneNumberVerification(addressBookWithUsers, phoneNumber);
 
     cout << "Wpisz adres e-mail: ";
     email = loadData();
-    email = emailAddressVerification(usersDatabase, email);
+    email = emailAddressVerification(addressBookWithUsers, email);
 
     cout << "Wpisz adres zamieszkania: ";
     address = loadData();
 
-    usersDatabase.push_back({ID, name, surname, phoneNumber, email, address});
+    addressBookWithUsers.push_back({IDOfTheLastUser, name, surname, phoneNumber, email, address});
 
     cout << "Adresat zostal dodany do ksiazki adresowej." << endl;
     Sleep(1000);
 
-    addressBook << ID << "|" << name << "|" << surname << "|" << phoneNumber << "|" << email << "|" << address << "|" << endl;
+    data << IDOfTheLastUser << "|" << loginUserID << "|" << name << "|" << surname << "|" << phoneNumber << "|" << email << "|" << address << "|" << endl;
 
-    addressBook.close();
+    data.close();
 
+    return IDOfTheLastUser;
+}
+
+void editUserPassword(vector<User> &userRegistry, int loginUserID) {
+
+    system("cls");
+    data.open("Uzytkownicy.txt", ios::out);
+    string password;
+    cout << "Podaj nowe haslo: ";
+    cin >> password;
+
+    for (int i = 0; i < (int) userRegistry.size(); i++) {
+        if (userRegistry.at(i).loginUserID == loginUserID) {
+            userRegistry.at(i).password = password;
+            data <<  userRegistry.at(i).loginUserID << "|" << userRegistry.at(i).login << "|" << userRegistry.at(i).password << "|" << endl;
+        }
+
+        else
+            data <<  userRegistry.at(i).loginUserID << "|" << userRegistry.at(i).login << "|" << userRegistry.at(i).password << "|" << endl;
+    }
+
+    data.close();
+    system ("cls");
+    cout << "Haslo zmienione";
+    Sleep(1500);
 }
 
 void displaysTheMainMenu() {
@@ -429,37 +515,178 @@ void displaysTheMainMenu() {
     cout << "4. Wyswietl wszystkich adresatow." << endl;
     cout << "5. Usun adresata." << endl;
     cout << "6. Edytuj adresata." << endl;
-    cout << "9. Zakoncz program." << endl;
+    cout << "-----------------------" << endl;
+    cout << "7. Zmien haslo." << endl;
+    cout << "8. Wyloguj sie." << endl;
 }
 
-void selectAnOptionInTheMainMenu(vector<UserData> &usersDatabase, UserData &user) {
 
-    while (1) {
+void selectAnOptionInTheMainMenu(vector<User> &userRegistry, int loginUserID) {
+
+    vector<UserData> addressBookWithUsers;
+    bool logout = true;
+
+    data.open("Adresaci.txt", ios::in);
+    if (data.good()) {
+        loadTheDataFileIntoTheProgram(addressBookWithUsers, loginUserID);
+        data.close();
+    }
+
+    while (logout) {
 
         displaysTheMainMenu();
 
         switch (getch()) {
         case '1':
-            dataLogging(usersDatabase);
+            dataLogging(addressBookWithUsers, loginUserID);
             break;
         case '2':
-            if (checkIfThereAreAnyUsers(usersDatabase))
-                searchByName(usersDatabase);
+            if (checkIfThereAreAnyUsers(addressBookWithUsers))
+                searchByName(addressBookWithUsers);
             break;
         case '3':
-            if (checkIfThereAreAnyUsers(usersDatabase))
-                searchBySurname(usersDatabase);
+            if (checkIfThereAreAnyUsers(addressBookWithUsers))
+                searchBySurname(addressBookWithUsers);
             break;
         case '4':
-            if (checkIfThereAreAnyUsers(usersDatabase))
-                displaysAllUsers(usersDatabase);
+            if (checkIfThereAreAnyUsers(addressBookWithUsers))
+                displaysAllUsers(addressBookWithUsers);
             break;
         case '5':
-            deleteSelectedUser(usersDatabase);
-            loadTheDataFileIntoTheProgram(usersDatabase, user);
+            deleteSelectedUser(addressBookWithUsers, loginUserID);
+
             break;
         case '6':
-            editSelectedUserByID(usersDatabase);
+            editSelectedUserByID(addressBookWithUsers, loginUserID);
+            break;
+        case '7':
+            editUserPassword(userRegistry, loginUserID);
+            break;
+        case '8':
+            system ("cls");
+            logout = false;
+            cout << "Wylogowales sie";
+            Sleep(1500);
+            break;
+        default:
+            cout << "Niepoprawny wybor. Sprobuj jeszcze raz:" << endl;
+            Sleep(1500);
+            break;
+        }
+    }
+}
+
+void welcomeDisplay(vector<User> &userRegistry, int loginUserID) {
+    system ("cls");
+    cout << ">>>>> Witaj ! <<<<<" << endl;
+    cout << "-----------------------" << endl;
+    cout << "----> " << userRegistry.at(loginUserID - 1).login << " <----" << endl;
+    cout << "-----------------------" << endl;
+    cout << "Jestes zalogowany";
+    Sleep(1500);
+}
+
+int logging(vector<User> &userRegistry) {
+
+    system("cls");
+    int loginUserID = 0;
+    string login, password;
+
+    cout << "Login: ";
+    cin >> login;
+    cout << "Haslo: ";
+    cin >> password;
+
+    for (int i = 0; i < (int) userRegistry.size(); i++) {
+        if (userRegistry.at(i).login == login && userRegistry.at(i).password == password)
+            loginUserID = userRegistry.at(i).loginUserID;
+    }
+
+    return loginUserID;
+}
+
+bool makeSureTheUserIsNotTaken(vector<User> &userRegistry, string username) {
+
+    for (int i = 0; i < (int) userRegistry.size(); i++) {
+        if (userRegistry.at(i).login == username)
+            return true;
+    }
+
+    return false;
+}
+
+void userRegistration(vector<User> &userRegistry) {
+
+    system("cls");
+    User loginDatabase;
+
+    int loginUserID = userRegistry.size();
+    string username, password;
+
+    if (loginUserID == 0)
+        loginUserID = 1;
+    else
+        loginUserID = userRegistry.size() + 1;
+
+    userFile.open("Uzytkownicy.txt", ios::out | ios::app);
+
+    loginDatabase.loginUserID = loginUserID;
+
+    cout << "Podaj login: ";
+    cin >> username;
+
+    while (makeSureTheUserIsNotTaken(userRegistry, username)) {
+        cout << "Login jest zajety. Wpisz inny: ";
+        cin >> username;
+    }
+
+    loginDatabase.login = username;
+
+    cout << "Podaj haslo: ";
+    cin >> password;
+    loginDatabase.password = password;
+
+    userRegistry.emplace_back(loginDatabase);
+
+    userFile << loginUserID << "|" << loginDatabase.login << "|" << loginDatabase.password << "|" << endl;
+    userFile.close();
+}
+
+void loginAndRegistrationScreen() {
+    system ("cls");
+    cout << ">>>>> MENU GLOWNE <<<<<" << endl;
+    cout << "-----------------------" << endl;
+    cout << "1. Rejestracja." << endl;
+    cout << "2. Logowanie." << endl;
+    cout << "9. Koniec programu." << endl;
+    cout << "-----------------------" << endl;
+    cout << "Twoj wybor: ";
+
+}
+
+void loginMenu (vector<User> &userRegistry) {
+
+    int loginUserID = 0;
+
+    while (1) {
+
+        loginAndRegistrationScreen();
+
+        switch (getch()) {
+        case '1':
+            userRegistration(userRegistry);
+            break;
+        case '2':
+            loginUserID = logging(userRegistry);
+            if (loginUserID > 0) {
+                welcomeDisplay(userRegistry, loginUserID);
+                selectAnOptionInTheMainMenu(userRegistry, loginUserID);
+            }
+
+            else {
+                cout << "Nie poprawny Login lub haslo.";
+                Sleep(1500);
+            }
             break;
         case '9':
             exit(0);
@@ -472,14 +699,46 @@ void selectAnOptionInTheMainMenu(vector<UserData> &usersDatabase, UserData &user
     }
 }
 
+void loadUserRegistry (vector<User> &userRegistry) {
+
+    User loginDatabase;
+
+    int lineNumber = 1;
+    string line;
+
+    while (getline(userFile, line, '|')) {
+
+        if (line == "\n")
+            break;
+
+        switch(lineNumber) {
+        case 1:
+            loginDatabase.loginUserID = atoi(line.c_str());
+            break;
+        case 2:
+            loginDatabase.login = line;
+            break;
+        case 3:
+            loginDatabase.password = line;
+            break;
+        }
+        if (lineNumber == 3) {
+            lineNumber = 0;
+            userRegistry.emplace_back(loginDatabase);
+        }
+        lineNumber++;
+    }
+}
+
 int main() {
 
-    UserData user;
-    vector<UserData> usersDatabase;
+    vector<User> userRegistry;
 
-    if (addressBook.good()) {
-        loadTheDataFileIntoTheProgram(usersDatabase, user);
+    userFile.open("Uzytkownicy.txt", ios::in);
+    if (userFile.good()) {
+        loadUserRegistry(userRegistry);
+        userFile.close();
     }
 
-    selectAnOptionInTheMainMenu(usersDatabase, user);
+    loginMenu(userRegistry);
 }
