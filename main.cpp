@@ -88,9 +88,15 @@ void saveChangesToTheFile(vector<UserData> &addressBookWithUsers, int loginUserI
     remove("Adresaci.txt");
     rename("Adresaci_temp.txt", "Adresaci.txt");
 }
+void editingScreen(){
+    system("cls");
+    cout << ">>>>> Edycja adresata <<<<<" << endl;
+    cout << "------------------------------" << endl;
+
+}
 
 void editHomeAddress(vector<UserData> &addressBookWithUsers, int ID) {
-    system ("cls");
+    editingScreen();
 
     cout << "Zmiana adresu " << addressBookWithUsers.at(ID).address << " na: ";
     addressBookWithUsers.at(ID).address = loadData();
@@ -125,7 +131,7 @@ string emailAddressVerification (vector<UserData> &addressBookWithUsers, string 
 }
 
 void editAddresEmail(vector<UserData> &addressBookWithUsers, int ID) {
-    system ("cls");
+    editingScreen();
 
     string newEmail;
     cout << "Zmiana e-mail " << addressBookWithUsers.at(ID).email << " na: ";
@@ -168,7 +174,7 @@ string phoneNumberVerification (vector<UserData> &addressBookWithUsers, string n
 }
 
 void editNumberPhone(vector<UserData> &addressBookWithUsers, int ID) {
-    system ("cls");
+    editingScreen();
     string newNumber;
     cout << "Zmiana numeru telefonu " << addressBookWithUsers.at(ID).phoneNumber << " na: ";
     newNumber = loadData();
@@ -178,14 +184,14 @@ void editNumberPhone(vector<UserData> &addressBookWithUsers, int ID) {
 }
 
 void editSurname(vector<UserData> &addressBookWithUsers, int ID) {
-    system ("cls");
+    editingScreen();
 
     cout << "Zmiana nazwiska " << addressBookWithUsers.at(ID).surname << " na: ";
     addressBookWithUsers.at(ID).surname = loadData();
 }
 
 void editName(vector<UserData> &addressBookWithUsers, int ID) {
-    system ("cls");
+    editingScreen();
 
     cout << "Zmiana imienia " << addressBookWithUsers.at(ID).name << " na: ";
     addressBookWithUsers.at(ID).name = loadData();
@@ -214,11 +220,11 @@ void displaysEditMenu() {
     cout << endl;
 }
 
+
 int searchForAUserByID(vector<UserData> &addressBookWithUsers) {
 
     int userID;
     string checkID;
-    system ("cls");
     cout << "Wpisz ID: ";
     cout << endl;
     checkID = loadData();
@@ -280,6 +286,7 @@ void editSelectedUserByID(vector<UserData> &addressBookWithUsers, int loginUserI
 int loadTheDataFileIntoTheProgram(vector<UserData> &addressBookWithUsers, int loginUserID) {
 
     UserData user;
+    addressBookWithUsers.clear();
 
     int lineNumber = 1, loginID = 0;
     string line;
@@ -323,8 +330,15 @@ int loadTheDataFileIntoTheProgram(vector<UserData> &addressBookWithUsers, int lo
     return user.id;
 }
 
+void deleteScreen(){
+    system("cls");
+    cout << ">>>>> Usuwanie adresata <<<<<" << endl;
+    cout << "------------------------------" << endl;
+}
+
 void deleteSelectedUser(vector<UserData> &addressBookWithUsers, int loginUserID) {
-    system ("cls");
+
+    deleteScreen();
 
     int ID = searchForAUserByID(addressBookWithUsers);
     if (ID < 0 ) {
@@ -422,9 +436,15 @@ bool checkIfThereAreAnyUsers (vector<UserData> &addressBookWithUsers) {
     return true;
 }
 
+void dataLoggingScreen(){
+    system("cls");
+    cout << ">>>>> Dodawanie adresata <<<<<" << endl;
+    cout << "------------------------------" << endl;
+}
+
 int dataLogging(vector<UserData> &addressBookWithUsers, int loginUserID) {
 
-    system("cls");
+    dataLoggingScreen();
 
     int IDOfTheLastUser;
 
@@ -451,6 +471,7 @@ int dataLogging(vector<UserData> &addressBookWithUsers, int loginUserID) {
         IDOfTheLastUser = 1;
     else
         IDOfTheLastUser = IDOfTheLastUser + 1;
+
 
     cout << "Wpisz imie: ";
     name = loadData();
@@ -507,7 +528,7 @@ void editUserPassword(vector<User> &userRegistry, int loginUserID) {
 
 void displaysTheMainMenu() {
     system ("cls");
-    cout << ">>>>> KSIAZKA ADRESOWA <<<<<" << endl;
+    cout << ">>>>> MENU UZYTKOWNIKA <<<<<" << endl;
     cout << endl;
     cout << "1. Dodaj adresata." << endl;
     cout << "2. Wyszukaj po imieniu." << endl;
@@ -615,9 +636,25 @@ bool makeSureTheUserIsNotTaken(vector<User> &userRegistry, string username) {
     return false;
 }
 
-void userRegistration(vector<User> &userRegistry) {
+void endOfUserRegistrationScreen(){
 
     system("cls");
+    cout << "-----------------------------" << endl;
+    cout << "****** Konto utworzone ******" << endl;
+    cout << "-----------------------------" << endl;
+    Sleep(1500);
+
+}
+
+void userRegistrationScreen(){
+    system("cls");
+    cout << ">>>>> Rejestracja <<<<<" << endl;
+    cout << "-----------------------" << endl;
+}
+
+void userRegistration(vector<User> &userRegistry) {
+
+    userRegistrationScreen();
     User loginDatabase;
 
     int loginUserID = userRegistry.size();
@@ -650,53 +687,8 @@ void userRegistration(vector<User> &userRegistry) {
 
     userFile << loginUserID << "|" << loginDatabase.login << "|" << loginDatabase.password << "|" << endl;
     userFile.close();
-}
 
-void loginAndRegistrationScreen() {
-    system ("cls");
-    cout << ">>>>> MENU GLOWNE <<<<<" << endl;
-    cout << "-----------------------" << endl;
-    cout << "1. Rejestracja." << endl;
-    cout << "2. Logowanie." << endl;
-    cout << "9. Koniec programu." << endl;
-    cout << "-----------------------" << endl;
-    cout << "Twoj wybor: ";
-
-}
-
-void loginMenu (vector<User> &userRegistry) {
-
-    int loginUserID = 0;
-
-    while (1) {
-
-        loginAndRegistrationScreen();
-
-        switch (getch()) {
-        case '1':
-            userRegistration(userRegistry);
-            break;
-        case '2':
-            loginUserID = logging(userRegistry);
-            if (loginUserID > 0) {
-                welcomeDisplay(userRegistry, loginUserID);
-                selectAnOptionInTheMainMenu(userRegistry, loginUserID);
-            }
-
-            else {
-                cout << "Nie poprawny Login lub haslo.";
-                Sleep(1500);
-            }
-            break;
-        case '9':
-            exit(0);
-            break;
-        default:
-            cout << "Niepoprawny wybor. Sprobuj jeszcze raz:" << endl;
-            Sleep(1500);
-            break;
-        }
-    }
+    endOfUserRegistrationScreen();
 }
 
 void loadUserRegistry (vector<User> &userRegistry) {
@@ -730,15 +722,62 @@ void loadUserRegistry (vector<User> &userRegistry) {
     }
 }
 
-int main() {
+void loginAndRegistrationScreen() {
+    system ("cls");
+    cout << ">>>>> MENU GLOWNE <<<<<" << endl;
+    cout << "-----------------------" << endl;
+    cout << "1. Rejestracja." << endl;
+    cout << "2. Logowanie." << endl;
+    cout << "9. Koniec programu." << endl;
+    cout << "-----------------------" << endl;
+    cout << "Twoj wybor: ";
 
-    vector<User> userRegistry;
+}
+
+void loginMenu (vector<User> &userRegistry) {
+
+    int loginUserID = 0;
 
     userFile.open("Uzytkownicy.txt", ios::in);
     if (userFile.good()) {
         loadUserRegistry(userRegistry);
         userFile.close();
     }
+
+    while (1) {
+
+        loginAndRegistrationScreen();
+
+        switch (getch()) {
+        case '1':
+            userRegistration(userRegistry);
+            break;
+        case '2':
+            loginUserID = logging(userRegistry);
+            if (loginUserID > 0) {
+                welcomeDisplay(userRegistry, loginUserID);
+                selectAnOptionInTheMainMenu(userRegistry, loginUserID);
+            }
+
+            else {
+                cout << "Nie poprawny Login lub haslo.";
+                Sleep(1500);
+            }
+            break;
+        case '9':
+            exit(0);
+            break;
+        default:
+            cout << "Niepoprawny wybor. Sprobuj jeszcze raz:" << endl;
+            Sleep(1500);
+            break;
+        }
+    }
+}
+
+int main() {
+
+    vector<User> userRegistry;
 
     loginMenu(userRegistry);
 }
