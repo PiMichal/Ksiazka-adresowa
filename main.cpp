@@ -15,8 +15,8 @@ struct User {
     string login, password;
 };
 
-struct UserData {
-    int id;
+struct AddresseeDetails {
+    int id, userID;
     string name, surname, phoneNumber, email, address;
 };
 
@@ -27,75 +27,32 @@ string loadData() {
     return in;
 }
 
-void saveChangesToTheFile(vector<UserData> &addressBookWithUsers, int loginUserID) {
+void saveChangesToTheFile(string editedPersonData) {
 
-    UserData user;
+    string line, editedPersonId = editedPersonData.substr(0, editedPersonData.find('|'));
+    fstream temporaryFile;
 
     data.open("Adresaci.txt", ios::in);
-    ofstream newFile("Adresaci_temp.txt", ios::out);
+    temporaryFile.open("temp.txt", ios::out);
 
-    int loginID = 0, lineNumber = 1;
-    string line;
-
-    while (getline(data, line, '|')) {
-
-        switch(lineNumber) {
-        case 1:
-            user.id = atoi(line.c_str());
-            break;
-        case 2:
-            loginID = atoi(line.c_str());
-            break;
-        case 3:
-            user.name = line;
-            break;
-        case 4:
-            user.surname = line;
-            break;
-        case 5:
-            user.phoneNumber = line;
-            break;
-        case 6:
-            user.email = line;
-            break;
-        case 7:
-            user.address = line;
-            break;
-        }
-
-        if (lineNumber == 7) {
-            if (addressBookWithUsers.size() == 0 && loginID != loginUserID)
-                newFile << user.id << "|" << loginID << "|" << user.name << "|" << user.surname << "|" << user.phoneNumber << "|" << user.email << "|" << user.address << "|" << endl;
-            else {
-                for (int i = 0; i < (int) addressBookWithUsers.size(); i++) {
-                    if (user.id == addressBookWithUsers.at(i).id && loginID == loginUserID) {
-                        newFile << addressBookWithUsers.at(i).id << "|" << loginUserID << "|" << addressBookWithUsers.at(i).name << "|" << addressBookWithUsers.at(i).surname << "|" << addressBookWithUsers.at(i).phoneNumber << "|" << addressBookWithUsers.at(i).email << "|" << addressBookWithUsers.at(i).address << "|" << endl;
-                        break;
-                    } else if (loginID != loginUserID) {
-                        newFile << user.id << "|" << loginID << "|" << user.name << "|" << user.surname << "|" << user.phoneNumber << "|" << user.email << "|" << user.address << "|" << endl;
-                        break;
-                    }
-                }
-            }
-
-            lineNumber = 0;
-        }
-
-        lineNumber++;
+    while(getline(data,line)) {
+        line.substr(0, line.find('|')) != editedPersonId ? temporaryFile << line << endl : temporaryFile << editedPersonData << endl;
     }
-    newFile.close();
+
     data.close();
+    temporaryFile.close();
     remove("Adresaci.txt");
-    rename("Adresaci_temp.txt", "Adresaci.txt");
+    rename("temp.txt", "Adresaci.txt");
+
 }
-void editingScreen(){
+void editingScreen() {
     system("cls");
     cout << ">>>>> Edycja adresata <<<<<" << endl;
     cout << "------------------------------" << endl;
 
 }
 
-void editHomeAddress(vector<UserData> &addressBookWithUsers, int ID) {
+void editHomeAddress(vector<AddresseeDetails> &addressBookWithUsers, int ID) {
     editingScreen();
 
     cout << "Zmiana adresu " << addressBookWithUsers.at(ID).address << " na: ";
@@ -107,7 +64,7 @@ bool emailAddressVerificationByRegex(string newEmail) {
     return regex_match(newEmail,pattern);
 }
 
-string emailAddressVerification (vector<UserData> &addressBookWithUsers, string newEmail) {
+string emailAddressVerification (vector<AddresseeDetails> &addressBookWithUsers, string newEmail) {
     int i = 0;
 
     while (emailAddressVerificationByRegex(newEmail) == false && (int) addressBookWithUsers.size() == 0) {
@@ -130,7 +87,7 @@ string emailAddressVerification (vector<UserData> &addressBookWithUsers, string 
     return newEmail;
 }
 
-void editAddresEmail(vector<UserData> &addressBookWithUsers, int ID) {
+void editAddresEmail(vector<AddresseeDetails> &addressBookWithUsers, int ID) {
     editingScreen();
 
     string newEmail;
@@ -147,7 +104,7 @@ bool checkIfThereAreOnlyDigits(string newNumber) {
     return all_of(newNumber.begin(), newNumber.end(), ::isdigit);
 }
 
-string phoneNumberVerification (vector<UserData> &addressBookWithUsers, string newNumber) {
+string phoneNumberVerification (vector<AddresseeDetails> &addressBookWithUsers, string newNumber) {
 
     int i = 0;
 
@@ -173,7 +130,7 @@ string phoneNumberVerification (vector<UserData> &addressBookWithUsers, string n
     return newNumber;
 }
 
-void editNumberPhone(vector<UserData> &addressBookWithUsers, int ID) {
+void editNumberPhone(vector<AddresseeDetails> &addressBookWithUsers, int ID) {
     editingScreen();
     string newNumber;
     cout << "Zmiana numeru telefonu " << addressBookWithUsers.at(ID).phoneNumber << " na: ";
@@ -183,21 +140,21 @@ void editNumberPhone(vector<UserData> &addressBookWithUsers, int ID) {
     addressBookWithUsers.at(ID).phoneNumber = newNumber;
 }
 
-void editSurname(vector<UserData> &addressBookWithUsers, int ID) {
+void editSurname(vector<AddresseeDetails> &addressBookWithUsers, int ID) {
     editingScreen();
 
     cout << "Zmiana nazwiska " << addressBookWithUsers.at(ID).surname << " na: ";
     addressBookWithUsers.at(ID).surname = loadData();
 }
 
-void editName(vector<UserData> &addressBookWithUsers, int ID) {
+void editName(vector<AddresseeDetails> &addressBookWithUsers, int ID) {
     editingScreen();
 
     cout << "Zmiana imienia " << addressBookWithUsers.at(ID).name << " na: ";
     addressBookWithUsers.at(ID).name = loadData();
 }
 
-void displaysUsersByID(vector<UserData> &addressBookWithUsers, int ID) {
+void displaysUsersByID(vector<AddresseeDetails> &addressBookWithUsers, int ID) {
     cout << "Id:                " << addressBookWithUsers.at(ID).id << endl;
     cout << "Imie:              " << addressBookWithUsers.at(ID).name << endl;
     cout << "Nazwisko:          " << addressBookWithUsers.at(ID).surname << endl;
@@ -221,8 +178,9 @@ void displaysEditMenu() {
 }
 
 
-int searchForAUserByID(vector<UserData> &addressBookWithUsers) {
+int searchForAUserByID(vector<AddresseeDetails> &addressBookWithUsers) {
 
+    system ("cls");
     int userID;
     string checkID;
     cout << "Wpisz ID: ";
@@ -241,9 +199,25 @@ int searchForAUserByID(vector<UserData> &addressBookWithUsers) {
     return -1;
 }
 
-void editSelectedUserByID(vector<UserData> &addressBookWithUsers, int loginUserID) {
+string getEditedPersonData(vector<AddresseeDetails> &addressBookWithUsers, int ID) {
+
+    string editedPersonData;
+
+    editedPersonData += to_string(addressBookWithUsers[ID].id) + "|";
+    editedPersonData += to_string(addressBookWithUsers[ID].userID) + "|";
+    editedPersonData += addressBookWithUsers[ID].name + "|";
+    editedPersonData += addressBookWithUsers[ID].surname + "|";
+    editedPersonData += addressBookWithUsers[ID].phoneNumber + "|";
+    editedPersonData += addressBookWithUsers[ID].email + "|";
+    editedPersonData += addressBookWithUsers[ID].address + "|";
+
+    return editedPersonData;
+}
+
+void editSelectedUserByID(vector<AddresseeDetails> &addressBookWithUsers) {
 
     int ID = searchForAUserByID(addressBookWithUsers);
+    string editedPersonData = "";
     bool backToMenu = true;
 
     if (ID < 0 ) {
@@ -258,18 +232,23 @@ void editSelectedUserByID(vector<UserData> &addressBookWithUsers, int loginUserI
         switch (getch()) {
         case '1':
             editName(addressBookWithUsers, ID);
+            editedPersonData = getEditedPersonData(addressBookWithUsers, ID);
             break;
         case '2':
             editSurname(addressBookWithUsers, ID);
+            editedPersonData = getEditedPersonData(addressBookWithUsers, ID);
             break;
         case '3':
             editNumberPhone(addressBookWithUsers, ID);
+            editedPersonData = getEditedPersonData(addressBookWithUsers, ID);
             break;
         case '4':
             editAddresEmail(addressBookWithUsers, ID);
+            editedPersonData = getEditedPersonData(addressBookWithUsers, ID);
             break;
         case '5':
             editHomeAddress(addressBookWithUsers, ID);
+            editedPersonData = getEditedPersonData(addressBookWithUsers, ID);
             break;
         case '6':
             backToMenu = false;
@@ -279,16 +258,16 @@ void editSelectedUserByID(vector<UserData> &addressBookWithUsers, int loginUserI
             Sleep(1000);
             break;
         }
-        saveChangesToTheFile(addressBookWithUsers, loginUserID);
+        saveChangesToTheFile(editedPersonData);
     }
 }
 
-int loadTheDataFileIntoTheProgram(vector<UserData> &addressBookWithUsers, int loginUserID) {
+int loadTheDataFileIntoTheProgram(vector<AddresseeDetails> &addressBookWithUsers, int loginUserID) {
 
-    UserData user;
+    AddresseeDetails user;
     addressBookWithUsers.clear();
 
-    int lineNumber = 1, loginID = 0;
+    int lineNumber = 1;
     string line;
 
     while (getline(data, line, '|')) {
@@ -301,7 +280,7 @@ int loadTheDataFileIntoTheProgram(vector<UserData> &addressBookWithUsers, int lo
             user.id = atoi(line.c_str());
             break;
         case 2:
-            loginID = atoi(line.c_str());
+            user.userID = atoi(line.c_str());
             break;
         case 3:
             user.name = line;
@@ -321,26 +300,26 @@ int loadTheDataFileIntoTheProgram(vector<UserData> &addressBookWithUsers, int lo
         }
         if (lineNumber == 7) {
             lineNumber = 0;
-            if (loginID == loginUserID)
+            if (user.userID == loginUserID)
                 addressBookWithUsers.emplace_back(user);
         }
         lineNumber++;
     }
-
     return user.id;
 }
 
-void deleteScreen(){
+void deleteScreen() {
     system("cls");
     cout << ">>>>> Usuwanie adresata <<<<<" << endl;
     cout << "------------------------------" << endl;
 }
 
-void deleteSelectedUser(vector<UserData> &addressBookWithUsers, int loginUserID) {
+void deleteSelectedUser(vector<AddresseeDetails> &addressBookWithUsers) {
 
     deleteScreen();
-
     int ID = searchForAUserByID(addressBookWithUsers);
+    string line;
+
     if (ID < 0 ) {
         cout << "Nie ma takiego adresata";
         Sleep(1500);
@@ -351,25 +330,29 @@ void deleteSelectedUser(vector<UserData> &addressBookWithUsers, int loginUserID)
     }
 
     if (ID >= 0 && getch() == 't') {
+        fstream temporaryFile;
+        data.open("Adresaci.txt", ios::in);
+        temporaryFile.open("temp.txt", ios::out);
 
-        if (addressBookWithUsers.size() == 1)
-            addressBookWithUsers.clear();
-
-        else if (addressBookWithUsers.size() > 1) {
-            for (int i = 0; i < (int) addressBookWithUsers.size(); i++) {
-                if (i == ID)
-                    addressBookWithUsers.erase(addressBookWithUsers.begin() + ID);
-            }
+        while(getline(data, line)) {
+            if (stoi(line.substr(0, line.find('|'))) != addressBookWithUsers[ID].id)
+                temporaryFile << line << endl;
         }
 
-        saveChangesToTheFile(addressBookWithUsers, loginUserID);
+        data.close();
+        temporaryFile.close();
+
+        remove("Adresaci.txt");
+        rename("temp.txt", "Adresaci.txt");
+
         system ("cls");
         cout << "\n>>>>> Adresat zostal usuniety. <<<<<";
         Sleep(1500);
     }
+
 }
 
-void displaysAllUsers(vector<UserData> &addressBookWithUsers) {
+void displaysAllUsers(vector<AddresseeDetails> &addressBookWithUsers) {
 
     system("cls");
 
@@ -385,7 +368,7 @@ void displaysAllUsers(vector<UserData> &addressBookWithUsers) {
     getch();
 }
 
-void searchBySurname(vector<UserData> &addressBookWithUsers) {
+void searchBySurname(vector<AddresseeDetails> &addressBookWithUsers) {
     bool check = true;
     string wantedSurname;
     system ("cls");
@@ -405,7 +388,7 @@ void searchBySurname(vector<UserData> &addressBookWithUsers) {
     getch();
 }
 
-void searchByName(vector<UserData> &addressBookWithUsers) {
+void searchByName(vector<AddresseeDetails> &addressBookWithUsers) {
     bool check = true;
     string wantedName;
     system ("cls");
@@ -425,7 +408,7 @@ void searchByName(vector<UserData> &addressBookWithUsers) {
     getch();
 }
 
-bool checkIfThereAreAnyUsers (vector<UserData> &addressBookWithUsers) {
+bool checkIfThereAreAnyUsers (vector<AddresseeDetails> &addressBookWithUsers) {
 
     if ((int) addressBookWithUsers.size() == 0) {
         system ("cls");
@@ -436,21 +419,20 @@ bool checkIfThereAreAnyUsers (vector<UserData> &addressBookWithUsers) {
     return true;
 }
 
-void dataLoggingScreen(){
+void dataLoggingScreen() {
     system("cls");
     cout << ">>>>> Dodawanie adresata <<<<<" << endl;
     cout << "------------------------------" << endl;
 }
 
-int dataLogging(vector<UserData> &addressBookWithUsers, int loginUserID) {
+int dataLogging(vector<AddresseeDetails> &addressBookWithUsers, int IDOfTheLastUser, int loginUserID) {
 
     dataLoggingScreen();
-
-    int IDOfTheLastUser;
+    string name, surname, phoneNumber, email, address;
 
     data.open("Adresaci.txt", ios::in);
 
-    if (data.good()){
+    if (data.good()) {
         IDOfTheLastUser = loadTheDataFileIntoTheProgram(addressBookWithUsers, loginUserID);
         data.close();
     }
@@ -458,20 +440,17 @@ int dataLogging(vector<UserData> &addressBookWithUsers, int loginUserID) {
     ifstream in ("Adresaci.txt");
     bool fileIsEmpty = (in.get(), in.eof());
 
-    if (fileIsEmpty){
+    if (fileIsEmpty) {
         IDOfTheLastUser = 0;
         in.close();
     }
 
-    string name, surname, phoneNumber, email, address;
 
     data.open("Adresaci.txt", ios::out | ios::app);
-
     if (IDOfTheLastUser == 0)
         IDOfTheLastUser = 1;
     else
         IDOfTheLastUser = IDOfTheLastUser + 1;
-
 
     cout << "Wpisz imie: ";
     name = loadData();
@@ -490,7 +469,7 @@ int dataLogging(vector<UserData> &addressBookWithUsers, int loginUserID) {
     cout << "Wpisz adres zamieszkania: ";
     address = loadData();
 
-    addressBookWithUsers.push_back({IDOfTheLastUser, name, surname, phoneNumber, email, address});
+    addressBookWithUsers.push_back({IDOfTheLastUser, loginUserID, name, surname, phoneNumber, email, address});
 
     cout << "Adresat zostal dodany do ksiazki adresowej." << endl;
     Sleep(1000);
@@ -544,12 +523,12 @@ void displaysTheMainMenu() {
 
 void selectAnOptionInTheMainMenu(vector<User> &userRegistry, int loginUserID) {
 
-    vector<UserData> addressBookWithUsers;
+    vector<AddresseeDetails> addressBookWithUsers;
     bool logout = true;
-
+    int IDOfTheLastUser = 0;
     data.open("Adresaci.txt", ios::in);
     if (data.good()) {
-        loadTheDataFileIntoTheProgram(addressBookWithUsers, loginUserID);
+        IDOfTheLastUser = loadTheDataFileIntoTheProgram(addressBookWithUsers, loginUserID);
         data.close();
     }
 
@@ -559,7 +538,7 @@ void selectAnOptionInTheMainMenu(vector<User> &userRegistry, int loginUserID) {
 
         switch (getch()) {
         case '1':
-            dataLogging(addressBookWithUsers, loginUserID);
+            IDOfTheLastUser = dataLogging(addressBookWithUsers, IDOfTheLastUser, loginUserID);
             break;
         case '2':
             if (checkIfThereAreAnyUsers(addressBookWithUsers))
@@ -574,11 +553,14 @@ void selectAnOptionInTheMainMenu(vector<User> &userRegistry, int loginUserID) {
                 displaysAllUsers(addressBookWithUsers);
             break;
         case '5':
-            deleteSelectedUser(addressBookWithUsers, loginUserID);
-
+            deleteSelectedUser(addressBookWithUsers);
+            data.open("Adresaci.txt", ios::in);
+            if (data.good())
+                loadTheDataFileIntoTheProgram(addressBookWithUsers, loginUserID);
+            data.close();
             break;
         case '6':
-            editSelectedUserByID(addressBookWithUsers, loginUserID);
+            editSelectedUserByID(addressBookWithUsers);
             break;
         case '7':
             editUserPassword(userRegistry, loginUserID);
@@ -622,7 +604,6 @@ int logging(vector<User> &userRegistry) {
         if (userRegistry.at(i).login == login && userRegistry.at(i).password == password)
             loginUserID = userRegistry.at(i).loginUserID;
     }
-
     return loginUserID;
 }
 
@@ -636,7 +617,7 @@ bool makeSureTheUserIsNotTaken(vector<User> &userRegistry, string username) {
     return false;
 }
 
-void endOfUserRegistrationScreen(){
+void endOfUserRegistrationScreen() {
 
     system("cls");
     cout << "-----------------------------" << endl;
@@ -646,7 +627,7 @@ void endOfUserRegistrationScreen(){
 
 }
 
-void userRegistrationScreen(){
+void userRegistrationScreen() {
     system("cls");
     cout << ">>>>> Rejestracja <<<<<" << endl;
     cout << "-----------------------" << endl;
